@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quem Matou? - XIII: O Último Arcano</title>
+    <style>
+        :root {
+            --fundo: #0d131a;
+            --painel: #151e29;
+            --borda: #2d3748;
+            --texto: #e2e8f0;
+            --texto-suave: #a0aec0;
+            --destaque: #38b2ac;
+            --alerta: #e53e3e;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+        body { background: var(--fundo); color: var(--texto); display: flex; flex-direction: column; min-height: 100vh; }
+
+        :focus-visible { outline: 3px solid var(--destaque); outline-offset: 2px; }
+
+        /* Cabeçalho */
+        header {
+            background: var(--painel); padding: 16px 40px; display: flex; flex-wrap: wrap;
+            gap: 12px 30px; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--borda);
+        }
+        .logo h1 { font-size: 1.5rem; letter-spacing: 2px; color: #fff; }
+        .logo span { font-size: .85rem; color: var(--alerta); font-weight: bold; letter-spacing: 1px; }
+        nav ul { list-style: none; display: flex; flex-wrap: wrap; gap: 8px 25px; }
+        nav a {
+            text-decoration: none; color: var(--texto-suave); font-weight: bold; font-size: .9rem;
+            padding-bottom: 5px; border-bottom: 2px solid transparent; transition: color .3s;
+        }
+        nav a:hover, nav a.ativo { color: #fff; border-bottom-color: var(--destaque); }
+
+        /* Principal */
+        main {
+            flex: 1; display: flex; flex-direction: column; align-items: center;
+            padding: 40px 20px; max-width: 1000px; margin: 0 auto; width: 100%;
+        }
+        .titulo-secao { text-align: center; margin-bottom: 24px; }
+        .titulo-secao h2 { color: var(--alerta); font-size: 2rem; letter-spacing: 2px; margin-bottom: 8px; }
+        .titulo-secao p { color: var(--texto-suave); max-width: 680px; line-height: 1.5; }
+
+        .aviso-pistas {
+            width: 100%; background: var(--painel); border-left: 3px solid var(--destaque);
+            padding: 12px 16px; border-radius: 4px; margin-bottom: 30px; font-size: .9rem; line-height: 1.5; color: #cbd5e0;
+        }
+        .aviso-pistas.bloqueado { border-left-color: var(--alerta); }
+        .aviso-pistas a { color: var(--destaque); font-weight: bold; }
+
+        .subtitulo-etapa {
+            width: 100%; color: var(--destaque); font-size: 1.1rem; letter-spacing: 1px;
+            margin-bottom: 15px; text-transform: uppercase;
+        }
+
+        /* Suspeitos */
+        .grade-suspeitos {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 25px; width: 100%; margin-bottom: 35px;
+        }
+        .card-suspeito {
+            background: var(--painel); border: 2px solid var(--borda); border-radius: 8px; padding: 16px;
+            text-align: center; cursor: pointer; color: inherit; font-size: inherit;
+            transition: transform .2s, border-color .2s, box-shadow .2s;
+        }
+        .card-suspeito:hover { transform: translateY(-5px); border-color: var(--destaque); }
+        .card-suspeito[aria-pressed="true"] {
+            border-color: var(--alerta); background: #1f1720; box-shadow: 0 0 20px rgba(229, 62, 62, .4);
+        }
+        .foto-suspeito {
+            width: 100%; height: 230px; object-fit: cover; border-radius: 4px; margin-bottom: 15px;
+            filter: grayscale(40%) contrast(1.1); background: var(--fundo);
+        }
+        .card-suspeito[aria-pressed="true"] .foto-suspeito { filter: none; }
+        .nome-suspeito { font-size: 1.25rem; color: #fff; margin-bottom: 4px; display: block; }
+        .curso-suspeito { font-size: .85rem; color: var(--destaque); font-weight: bold; margin-bottom: 10px; display: block; }
+        .alibi-suspeito { font-size: .88rem; color: #cbd5e0; line-height: 1.45; display: block; }
+
+        /* Locais */
+        .grade-locais {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px; width: 100%; margin-bottom: 35px;
+        }
+        .btn-local {
+            background: var(--painel); border: 2px solid var(--borda); color: var(--texto);
+            padding: 14px 12px; border-radius: 8px; font-size: .9rem; font-weight: bold; cursor: pointer;
+            transition: transform .2s, border-color .2s, background-color .2s;
+        }
+        .btn-local:hover { transform: translateY(-3px); border-color: var(--destaque); }
+        .btn-local[aria-pressed="true"] {
+            border-color: var(--destaque); background: #163336; color: #fff; box-shadow: 0 0 15px rgba(56, 178, 172, .35);
+        }
+
+        /* Ações */
+        .acoes-finais { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; }
+        .btn-acusar {
+            background: var(--alerta); color: #fff; border: none; padding: 15px 40px; font-size: 1.05rem;
+            font-weight: bold; letter-spacing: 1.5px; border-radius: 6px; cursor: pointer;
+            transition: background-color .2s, transform .2s; text-transform: uppercase;
+        }
+        .btn-acusar:hover:not(:disabled) { background: #c53030; transform: scale(1.03); }
+        .btn-acusar:disabled { background: var(--borda); color: #718096; cursor: not-allowed; }
+        .btn-sortear {
+            background: transparent; color: var(--destaque); border: 2px solid var(--destaque);
+            padding: 13px 24px; font-size: .95rem; font-weight: bold; border-radius: 6px; cursor: pointer;
+            transition: background-color .2s, color .2s;
+        }
+        .btn-sortear:hover { background: var(--destaque); color: var(--fundo); }
+
+        /* Resultado */
+        .modal-fundo {
+            display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, .9);
+            justify-content: center; align-items: center; z-index: 1000; padding: 20px;
+        }
+        .modal-fundo.aberto { display: flex; }
+        .modal-conteudo {
+            background: var(--painel); border: 2px solid var(--destaque); border-radius: 8px;
+            max-width: 550px; width: 100%; padding: 30px; text-align: center;
+        }
+        .modal-conteudo.erro { border-color: var(--alerta); }
+        .resultado-titulo { font-size: 1.7rem; margin-bottom: 12px; color: var(--destaque); }
+        .modal-conteudo.erro .resultado-titulo { color: var(--alerta); }
+        .texto-resultado { color: #cbd5e0; line-height: 1.6; margin-bottom: 24px; }
+        .acoes-modal { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+        .btn-fechar {
+            background: var(--borda); color: #fff; border: none; padding: 10px 25px;
+            border-radius: 4px; cursor: pointer; font-weight: bold;
+        }
+        .btn-fechar:hover { background: #4a5568; }
+        .btn-recomecar {
+            background: var(--destaque); color: var(--fundo); border: none; padding: 10px 25px;
+            border-radius: 4px; cursor: pointer; font-weight: bold;
+        }
+        .btn-recomecar:hover { background: #4fd1c5; }
+
+        .pistas-suspeito { display: block; margin-top: 10px; font-size: .8rem; color: var(--texto-suave); }
+
+        @media (max-width: 600px) {
+            header { padding: 14px 18px; }
+            .logo h1 { font-size: 1.2rem; }
+            .titulo-secao h2 { font-size: 1.6rem; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .card-suspeito, .btn-local, .btn-acusar { transition: none; }
+            .card-suspeito:hover, .btn-local:hover { transform: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <h1>XIII: O ÚLTIMO ARCANO</h1>
+            <span>O CASO UNAERP • RIBEIRÃO PRETO</span>
+        </div>
+        <nav aria-label="Páginas do site">
+            <ul>
+                <li><a href="index.html" data-nav-interno="true">O MAPA (JOGAR)</a></li>
+                <li><a href="culpado.html" class="ativo" aria-current="page" data-nav-interno="true">QUEM MATOU?</a></li>
+                <li><a href="redes.html" data-nav-interno="true">NOSSAS REDES</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="titulo-secao">
+            <h2>QUEM MATOU A LORENA?</h2>
+            <p>A maldição do tarô da Sala de Arquivo espalhou situações bizarras pela UNAERP e a Lorena morreu. Escolha um suspeito e um local do campus para registrar sua hipótese.</p>
+        </div>
+
+        <p class="aviso-pistas" id="aviso-pistas" aria-live="polite"></p>
+
+        <h3 class="subtitulo-etapa">1. Escolha o suspeito</h3>
+        <div class="grade-suspeitos" id="lista-suspeitos"></div>
+
+        <h3 class="subtitulo-etapa">2. Escolha um local do campus</h3>
+        <div class="grade-locais" id="lista-locais"></div>
+
+        <div class="acoes-finais">
+            <button type="button" class="btn-acusar" id="btn-acusar" disabled>Colete todas as 6 pistas</button>
+            <button type="button" class="btn-sortear" id="btn-sortear">Sortear novo local</button>
+        </div>
+    </main>
+
+    <div class="modal-fundo" id="modal-resultado" role="dialog" aria-modal="true" aria-labelledby="titulo-resultado">
+        <div class="modal-conteudo" id="caixa-resultado">
+            <h2 class="resultado-titulo" id="titulo-resultado"></h2>
+            <p class="texto-resultado" id="texto-resultado"></p>
+            <div class="acoes-modal">
+                <button type="button" class="btn-fechar" id="btn-fechar">Fechar</button>
+                <button type="button" class="btn-recomecar" id="btn-recomecar" hidden>Recomeçar?</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const CULPADA = 'eduarda';
+        const TOTAL_PISTAS = 6;
+
+        const CHAVE_NAV = 'xiii-nav-interna';
+        const CHAVE_PISTAS = 'xiii-pistas-coletadas';
+        const CHAVE_MORTE = 'xiii-local-morte';
+        const CHAVE_DIST = 'xiii-distribuicao-pistas';
+
+        const SUSPEITO_POR_PISTA = {
+            E1: 'eduarda',
+            E2: 'eduarda',
+            G1: 'gabriele',
+            G2: 'gabriele',
+            M1: 'matheus',
+            M2: 'matheus'
+        };
+
+        const MENSAGENS_ERRO_SUSPEITO = {
+            matheus: 'Pelas pistas coletadas, não indica que Matheus cometeu o crime — o rastro dele sugere que percebeu padrões do caos antes dos outros, mas não liga à autoria da morte da Lorena. Revise as pistas e tente outra hipótese.',
+            gabriele: 'Pelas pistas coletadas, não indica que Gabriele cometeu o crime — ela parece ter observado a maldição com humor ácido, mas não fecha como responsável. Revise as pistas e tente outra hipótese.'
+        };
+
+        const suspeitos = [
+            { id: 'eduarda',  nome: 'Eduarda',  rotulo: 'Suspeita #01 • UNAERP', foto: 'suspeitos/eduarda.jpg',
+              alibi: 'Eu só estava por perto quando o baralho apareceu — ninguém imaginava o que ia acontecer com a Lorena.' },
+            { id: 'matheus',  nome: 'Matheus',  rotulo: 'Suspeito #02 • UNAERP', foto: 'suspeitos/matheus.jpg',
+              alibi: 'Quando a maldição começou a dar ruim, eu tentei sair do campus pelo estacionamento.' },
+            { id: 'gabriele', nome: 'Gabriele', rotulo: 'Suspeita #03 • UNAERP', foto: 'suspeitos/gabriele.jpg',
+              alibi: 'Eu estava na Praça de Alimentação quando tudo virou um caos bizarro na faculdade.' }
+        ];
+
+        const locais = [
+            { id: 'sala-arquivo',   nome: 'Sala de Arquivo' },
+            { id: 'teatro',         nome: 'Teatro Bassano Vaccarini' },
+            { id: 'biblioteca',     nome: 'Biblioteca Central' },
+            { id: 'blocos',         nome: 'Bloco H / Comunicação' },
+            { id: 'cantina',        nome: 'Praça de Alimentação' },
+            { id: 'estacionamento', nome: 'Estacionamento Portaria' }
+        ];
+
+        const nomeSuspeito = id => suspeitos.find(s => s.id === id).nome;
+        const nomeLocal = id => locais.find(l => l.id === id).nome;
+
+        let veioDeNavegacaoInterna = false;
+        try {
+            veioDeNavegacaoInterna = sessionStorage.getItem(CHAVE_NAV) === '1';
+            sessionStorage.removeItem(CHAVE_NAV);
+        } catch (e) {}
+
+        let coletadas = [];
+        let localSorteado = locais[Math.floor(Math.random() * locais.length)].id;
+        let distribuicaoPistas = {};
+
+        if (veioDeNavegacaoInterna) {
+            try {
+                coletadas = JSON.parse(sessionStorage.getItem(CHAVE_PISTAS)) || [];
+                const salvoMorte = sessionStorage.getItem(CHAVE_MORTE);
+                if (locais.some(l => l.id === salvoMorte)) localSorteado = salvoMorte;
+                distribuicaoPistas = JSON.parse(sessionStorage.getItem(CHAVE_DIST)) || {};
+            } catch (e) {
+                coletadas = [];
+                distribuicaoPistas = {};
+            }
+        } else {
+            try {
+                sessionStorage.removeItem(CHAVE_PISTAS);
+                sessionStorage.removeItem(CHAVE_MORTE);
+                sessionStorage.removeItem(CHAVE_DIST);
+            } catch (e) {}
+        }
+
+        function salvarEstadoSessao() {
+            try {
+                sessionStorage.setItem(CHAVE_PISTAS, JSON.stringify(coletadas));
+                sessionStorage.setItem(CHAVE_MORTE, localSorteado);
+                sessionStorage.setItem(CHAVE_DIST, JSON.stringify(distribuicaoPistas));
+            } catch (e) {}
+        }
+
+        document.querySelectorAll('a[data-nav-interno="true"]').forEach(link => {
+            link.addEventListener('click', () => {
+                salvarEstadoSessao();
+                try { sessionStorage.setItem(CHAVE_NAV, '1'); } catch (e) {}
+            });
+        });
+
+        let suspeitoEscolhido = null;
+        let localEscolhido = null;
+
+        const btnAcusar = document.getElementById('btn-acusar');
+        const aviso = document.getElementById('aviso-pistas');
+
+        function pistasColetadas() { return coletadas.length; }
+
+        function todasAsPistasColetadas() { return pistasColetadas() >= TOTAL_PISTAS; }
+
+        function pistasDoSuspeito(id) {
+            const locaisDoSuspeito = coletadas.filter(localId => {
+                const codPista = distribuicaoPistas[localId];
+                return codPista && SUSPEITO_POR_PISTA[codPista] === id;
+            });
+            return locaisDoSuspeito.length + '/2';
+        }
+
+        function mostrarAvisoPistas() {
+            const n = pistasColetadas();
+            const liberado = todasAsPistasColetadas();
+            aviso.classList.toggle('bloqueado', !liberado);
+            aviso.replaceChildren();
+
+            if (liberado) {
+                aviso.textContent = 'Todas as ' + TOTAL_PISTAS + ' pistas foram coletadas. Acusação liberada — faça sua escolha.';
+                return;
+            }
+
+            aviso.append('Acusação bloqueada: você coletou ' + n + ' de ' + TOTAL_PISTAS + ' pistas. Volte ao ');
+            const a = document.createElement('a');
+            a.href = 'index.html';
+            a.dataset.navInterno = 'true';
+            a.textContent = 'mapa';
+            a.addEventListener('click', () => {
+                salvarEstadoSessao();
+                try { sessionStorage.setItem(CHAVE_NAV, '1'); } catch (e) {}
+            });
+            aviso.append(a, ' e pegue todas as pistas para poder acusar alguém.');
+        }
+
+        function fotoReserva(nome) {
+            const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="230"><rect width="100%" height="100%" fill="#0d131a"/>' +
+                '<text x="50%" y="55%" fill="#38b2ac" font-size="90" font-family="sans-serif" text-anchor="middle">' + nome[0] + '</text></svg>';
+            return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+        }
+
+        function criar(tag, classe, texto) {
+            const el = document.createElement(tag);
+            if (classe) el.className = classe;
+            if (texto) el.textContent = texto;
+            return el;
+        }
+
+        function montarSuspeitos() {
+            const grade = document.getElementById('lista-suspeitos');
+            suspeitos.forEach(s => {
+                const card = criar('button', 'card-suspeito');
+                card.type = 'button';
+                card.dataset.id = s.id;
+                card.setAttribute('aria-pressed', 'false');
+
+                const img = criar('img', 'foto-suspeito');
+                img.src = s.foto;
+                img.alt = 'Foto de ' + s.nome;
+                img.addEventListener('error', () => { img.src = fotoReserva(s.nome); }, { once: true });
+
+                card.append(img, criar('span', 'nome-suspeito', s.nome), criar('span', 'curso-suspeito', s.rotulo),
+                            criar('span', 'alibi-suspeito', '“' + s.alibi + '”'),
+                            criar('span', 'pistas-suspeito', 'Pistas encontradas: ' + pistasDoSuspeito(s.id)));
+                card.addEventListener('click', () => selecionar('suspeito', s.id));
+                grade.appendChild(card);
+            });
+        }
+
+        function montarLocais() {
+            const grade = document.getElementById('lista-locais');
+            locais.forEach(l => {
+                const btn = criar('button', 'btn-local', l.nome);
+                btn.type = 'button';
+                btn.dataset.id = l.id;
+                btn.setAttribute('aria-pressed', 'false');
+                btn.addEventListener('click', () => selecionar('local', l.id));
+                grade.appendChild(btn);
+            });
+        }
+
+        function marcar(seletor, id) {
+            document.querySelectorAll(seletor).forEach(el => {
+                el.setAttribute('aria-pressed', String(el.dataset.id === id));
+            });
+        }
+
+        function selecionar(tipo, id) {
+            if (tipo === 'suspeito') { suspeitoEscolhido = id; marcar('.card-suspeito', id); }
+            else { localEscolhido = id; marcar('.btn-local', id); }
+            atualizarBotaoAcusar();
+        }
+
+        function atualizarBotaoAcusar() {
+            if (!todasAsPistasColetadas()) {
+                btnAcusar.disabled = true;
+                btnAcusar.textContent = 'Colete todas as ' + TOTAL_PISTAS + ' pistas (' + pistasColetadas() + '/' + TOTAL_PISTAS + ')';
+                return;
+            }
+
+            const pronto = Boolean(suspeitoEscolhido && localEscolhido);
+            btnAcusar.disabled = !pronto;
+            btnAcusar.textContent = pronto ? 'Confirmar escolha' : 'Selecione suspeito e local';
+        }
+
+        function sortearNovoLocal() {
+            localSorteado = locais[Math.floor(Math.random() * locais.length)].id;
+            suspeitoEscolhido = null;
+            localEscolhido = null;
+            marcar('.card-suspeito', null);
+            marcar('.btn-local', null);
+            atualizarBotaoAcusar();
+        }
+
+        const modal = document.getElementById('modal-resultado');
+        const caixa = document.getElementById('caixa-resultado');
+        const btnFechar = document.getElementById('btn-fechar');
+        const btnRecomecar = document.getElementById('btn-recomecar');
+
+        function mostrarResultado(titulo, texto, erro, mostrarBotaoRecomecar) {
+            document.getElementById('titulo-resultado').textContent = titulo;
+            document.getElementById('texto-resultado').textContent = texto;
+            caixa.classList.toggle('erro', Boolean(erro));
+            btnRecomecar.hidden = !mostrarBotaoRecomecar;
+            modal.classList.add('aberto');
+            btnFechar.focus();
+        }
+
+        function recomecarJogo() {
+            try {
+                sessionStorage.removeItem(CHAVE_PISTAS);
+                sessionStorage.removeItem(CHAVE_MORTE);
+                sessionStorage.removeItem(CHAVE_DIST);
+                sessionStorage.removeItem(CHAVE_NAV);
+            } catch (e) {}
+            window.location.href = 'index.html';
+        }
+
+        function verificarAcusacao() {
+            if (!todasAsPistasColetadas()) {
+                atualizarBotaoAcusar();
+                return;
+            }
+
+            if (!suspeitoEscolhido || !localEscolhido) return;
+
+            const suspeito = nomeSuspeito(suspeitoEscolhido);
+            const local = nomeLocal(localEscolhido);
+
+            if (suspeitoEscolhido === CULPADA) {
+                mostrarResultado(
+                    'CASO RESOLVIDO',
+                    'Com todas as ' + TOTAL_PISTAS + ' pistas reunidas, você acertou em cheio: ' + suspeito + ' realmente matou Lorena no ' + local + ' em meio ao caos da maldição do tarô da UNAERP.',
+                    false,
+                    true
+                );
+            } else {
+                const mensagem = MENSAGENS_ERRO_SUSPEITO[suspeitoEscolhido] ||
+                    ('Pelas pistas coletadas, não indica que ' + suspeito + ' cometeu o crime. Revise as pistas e tente outra hipótese.');
+                mostrarResultado(
+                    'NÃO FOI ' + suspeito.toUpperCase(),
+                    mensagem,
+                    true,
+                    false
+                );
+            }
+        }
+
+        function fecharResultado() {
+            modal.classList.remove('aberto');
+            btnAcusar.focus();
+        }
+
+        btnAcusar.addEventListener('click', verificarAcusacao);
+        document.getElementById('btn-sortear').addEventListener('click', sortearNovoLocal);
+        btnFechar.addEventListener('click', fecharResultado);
+        btnRecomecar.addEventListener('click', recomecarJogo);
+        modal.addEventListener('click', e => { if (e.target === modal) fecharResultado(); });
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && modal.classList.contains('aberto')) fecharResultado();
+        });
+
+        montarSuspeitos();
+        montarLocais();
+        mostrarAvisoPistas();
+        atualizarBotaoAcusar();
+    </script>
+</body>
+</html>

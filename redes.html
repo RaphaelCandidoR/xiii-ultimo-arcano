@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nossas Redes - XIII: O Último Arcano</title>
+    <meta name="description" content="Siga XIII: O Último Arcano no Instagram e acompanhe o caso da Lorena na UNAERP.">
+    <meta property="og:title" content="XIII: O Último Arcano - Caso UNAERP">
+    <meta property="og:description" content="Websérie de terror com humor ácido. Investigue o mapa e descubra quem matou a Lorena.">
+    <meta property="og:type" content="website">
+    <style>
+        :root {
+            --fundo: #0d131a;
+            --painel: #151e29;
+            --borda: #2d3748;
+            --texto: #e2e8f0;
+            --texto-suave: #a0aec0;
+            --destaque: #38b2ac;
+            --alerta: #e53e3e;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+        body { background: var(--fundo); color: var(--texto); display: flex; flex-direction: column; min-height: 100vh; }
+
+        :focus-visible { outline: 3px solid var(--destaque); outline-offset: 2px; }
+
+        /* Cabeçalho */
+        header {
+            background: var(--painel); padding: 16px 40px; display: flex; flex-wrap: wrap;
+            gap: 12px 30px; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--borda);
+        }
+        .logo h1 { font-size: 1.5rem; letter-spacing: 2px; color: #fff; }
+        .logo span { font-size: .85rem; color: var(--alerta); font-weight: bold; letter-spacing: 1px; }
+        nav ul { list-style: none; display: flex; flex-wrap: wrap; gap: 8px 25px; }
+        nav a {
+            text-decoration: none; color: var(--texto-suave); font-weight: bold; font-size: .9rem;
+            padding-bottom: 5px; border-bottom: 2px solid transparent; transition: color .3s;
+        }
+        nav a:hover, nav a.ativo { color: #fff; border-bottom-color: var(--destaque); }
+
+        /* Principal */
+        main {
+            flex: 1; display: flex; flex-direction: column; align-items: center;
+            padding: 40px 20px; max-width: 1000px; margin: 0 auto; width: 100%;
+        }
+        .titulo-secao { text-align: center; margin-bottom: 30px; }
+        .titulo-secao h2 { color: var(--destaque); font-size: 2rem; letter-spacing: 2px; margin-bottom: 10px; }
+        .titulo-secao p { color: #cbd5e0; max-width: 680px; line-height: 1.55; }
+
+        .caixa-universo {
+            background: var(--painel); border: 2px solid var(--borda); border-left: 4px solid var(--alerta);
+            border-radius: 8px; padding: 22px 25px; width: 100%; margin-bottom: 35px; line-height: 1.6; color: #cbd5e0;
+        }
+        .caixa-universo strong { color: #fff; }
+
+        /* Redes */
+        .grade-redes {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px; width: 100%; max-width: 420px; margin: 0 auto 40px;
+        }
+        .card-rede {
+            background: var(--painel); border: 2px solid var(--borda); border-radius: 8px; padding: 25px 20px;
+            text-align: center; display: flex; flex-direction: column; justify-content: space-between; gap: 20px;
+            transition: transform .2s, border-color .2s, box-shadow .2s;
+        }
+        .card-rede:hover, .card-rede:focus-within {
+            transform: translateY(-5px); border-color: var(--destaque); box-shadow: 0 10px 25px rgba(0, 0, 0, .5);
+        }
+        .icone-rede { width: 44px; height: 44px; color: var(--destaque); margin: 0 auto 10px; display: block; }
+        .tag-rede {
+            font-size: .8rem; font-weight: bold; letter-spacing: 1.5px; color: var(--alerta);
+            text-transform: uppercase; margin-bottom: 8px; display: block;
+        }
+        .nome-rede { font-size: 1.4rem; color: #fff; margin-bottom: 10px; }
+        .descricao-rede { font-size: .92rem; color: #cbd5e0; line-height: 1.5; }
+
+        .btn-rede {
+            display: inline-block; text-decoration: none; background: var(--destaque); color: var(--fundo);
+            font-weight: bold; padding: 12px 24px; border-radius: 6px; letter-spacing: .5px;
+            transition: background-color .2s, transform .2s;
+        }
+        .btn-rede:hover { background: #4fd1c5; transform: scale(1.03); }
+
+        /* Chamada para voltar ao jogo */
+        .chamada-jogo { text-align: center; color: var(--texto-suave); line-height: 1.6; }
+        .chamada-jogo a { color: var(--destaque); font-weight: bold; }
+
+        @media (max-width: 600px) {
+            header { padding: 14px 18px; }
+            .logo h1 { font-size: 1.2rem; }
+            .titulo-secao h2 { font-size: 1.6rem; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .card-rede, .btn-rede { transition: none; }
+            .card-rede:hover, .card-rede:focus-within, .btn-rede:hover { transform: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <h1>XIII: O ÚLTIMO ARCANO</h1>
+            <span>O CASO UNAERP • RIBEIRÃO PRETO</span>
+        </div>
+        <nav aria-label="Páginas do site">
+            <ul>
+                <li><a href="index.html" data-nav-interno="true">O MAPA (JOGAR)</a></li>
+                <li><a href="culpado.html" data-nav-interno="true">QUEM MATOU?</a></li>
+                <li><a href="redes.html" class="ativo" aria-current="page" data-nav-interno="true">NOSSAS REDES</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="titulo-secao">
+            <h2>UNIVERSO &amp; REDES SOCIAIS</h2>
+            <p>Acompanhe a websérie, os bastidores e as conexões com o que aconteceu na UNAERP após o baralho de tarô sair da Sala de Arquivo.</p>
+        </div>
+
+        <div class="caixa-universo">
+            <strong>Sobre o projeto:</strong> Misturando terror com humor ácido e clima de slasher satírico, <strong>XIII: O Último Arcano</strong> começa quando estudantes da UNAERP acham um baralho de tarô misterioso na <strong>Sala de Arquivo</strong> e ativam sem querer uma maldição que provoca situações bizarras e mortais. No mistério principal, a <strong>Lorena</strong> morre — use o mapa e o Instagram do jogo para juntar as peças.
+        </div>
+
+        <div class="grade-redes">
+            <!-- Instagram -->
+            <article class="card-rede">
+                <div>
+                    <svg class="icone-rede" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect x="3" y="3" width="18" height="18" rx="5"/>
+                        <circle cx="12" cy="12" r="4"/>
+                        <circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none"/>
+                    </svg>
+                    <span class="tag-rede">Bastidores &amp; Pistas</span>
+                    <h3 class="nome-rede">Instagram</h3>
+                    <p class="descricao-rede">Veja registros dos personagens, trechos do caso da Lorena, avisos da maldição e novidades da produção.</p>
+                </div>
+                <a class="btn-rede" href="https://www.instagram.com/encantae.ag/" target="_blank" rel="noopener noreferrer"
+                   aria-label="Abrir o Instagram do jogo (abre em nova aba)">Abrir Instagram</a>
+            </article>
+        </div>
+
+        <p class="chamada-jogo">Ainda não investigou o campus? <a href="index.html" data-nav-interno="true">Volte ao mapa</a> e colete as pistas.</p>
+    </main>
+
+    <script>
+        // Se for para os suspeitos ou para o mapa via link interno, preserva o estado da sessão
+        document.querySelectorAll('a[data-nav-interno="true"]').forEach(link => {
+            link.addEventListener('click', () => {
+                try { sessionStorage.setItem('xiii-nav-interna', '1'); } catch (e) {}
+            });
+        });
+
+        // Se der F5 no redes.html, limpa a sessão
+        try {
+            if (sessionStorage.getItem('xiii-nav-interna') === '1') {
+                sessionStorage.removeItem('xiii-nav-interna');
+            } else {
+                sessionStorage.removeItem('xiii-pistas-coletadas');
+                sessionStorage.removeItem('xiii-local-morte');
+            }
+        } catch (e) {}
+    </script>
+
+</body>
+</html>

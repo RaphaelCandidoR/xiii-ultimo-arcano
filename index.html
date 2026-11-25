@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XIII: O Último Arcano - Caso UNAERP</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+
+    <style>
+        :root {
+            --fundo: #0d131a;
+            --painel: #151e29;
+            --borda: #2d3748;
+            --texto: #e2e8f0;
+            --texto-suave: #a0aec0;
+            --destaque: #38b2ac;
+            --alerta: #e53e3e;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+        body { background: var(--fundo); color: var(--texto); display: flex; flex-direction: column; min-height: 100vh; }
+
+        :focus-visible { outline: 3px solid var(--destaque); outline-offset: 2px; }
+
+        /* Cabeçalho */
+        header {
+            background: var(--painel);
+            padding: 16px 40px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 30px;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--borda);
+        }
+        .logo h1 { font-size: 1.5rem; letter-spacing: 2px; color: #fff; }
+        .logo span { font-size: 0.85rem; color: var(--alerta); font-weight: bold; letter-spacing: 1px; }
+        nav ul { list-style: none; display: flex; flex-wrap: wrap; gap: 8px 25px; }
+        nav a {
+            text-decoration: none; color: var(--texto-suave); font-weight: bold; font-size: 0.9rem;
+            padding-bottom: 5px; border-bottom: 2px solid transparent; transition: color .3s;
+        }
+        nav a:hover, nav a.ativo { color: #fff; border-bottom-color: var(--destaque); }
+
+        /* Área principal */
+        main { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 25px 20px; }
+
+        .instrucoes { text-align: center; margin-bottom: 18px; max-width: 740px; }
+        .instrucoes h2 { color: var(--destaque); margin-bottom: 6px; font-size: 1.35rem; }
+        .instrucoes p { color: #cbd5e0; line-height: 1.5; font-size: 0.95rem; }
+
+        .progresso { margin-top: 12px; font-weight: bold; color: #fff; }
+        .progresso span { color: var(--destaque); }
+
+        .investigacao { width: 100%; max-width: 1100px; display: flex; flex-direction: column; gap: 16px; }
+
+        #mapa-unaerp {
+            width: 100%;
+            height: min(550px, 65vh);
+            min-height: 340px;
+            border: 3px solid var(--borda);
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .8);
+            z-index: 1;
+        }
+
+        /* Caderno de pistas */
+        .caderno { background: var(--painel); border: 2px solid var(--borda); border-radius: 8px; padding: 18px 20px; }
+        .caderno h3 { color: var(--destaque); font-size: 1.05rem; margin-bottom: 10px; }
+        .caderno ol { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+        .caderno li { display: flex; gap: 10px; align-items: baseline; font-size: .9rem; line-height: 1.4; }
+        .caderno .hora { color: var(--alerta); font-weight: bold; min-width: 48px; }
+        .caderno .vazio { color: var(--texto-suave); font-style: italic; }
+        .caderno button.item {
+            background: none; border: none; color: var(--texto); cursor: pointer; text-align: left; font-size: inherit;
+            text-decoration: underline; text-decoration-color: var(--borda); text-underline-offset: 3px;
+        }
+        .caderno button.item:hover { text-decoration-color: var(--destaque); }
+        .acoes-caderno { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; align-items: center; }
+        .reiniciar {
+            background: none; border: 1px solid var(--borda); color: var(--texto-suave);
+            padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: .8rem;
+        }
+        .reiniciar:hover { border-color: var(--alerta); color: #feb2b2; }
+        .ir-acusacao {
+            text-decoration: none; background: var(--alerta); color: #fff;
+            padding: 6px 14px; border-radius: 4px; font-size: .8rem; font-weight: bold;
+        }
+        .ir-acusacao:hover { background: #c53030; }
+
+        /* Pinos do mapa */
+        .custom-div-icon { background: none; border: none; }
+        .pino-investigacao {
+            background: rgba(21, 30, 41, .95);
+            border: 2px solid var(--destaque);
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: .8rem;
+            font-weight: bold;
+            white-space: nowrap;
+            display: flex; align-items: center; gap: 6px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, .8);
+            cursor: pointer;
+            transition: transform .2s, background-color .2s;
+        }
+        .pino-investigacao:hover,
+        .leaflet-marker-icon:focus-visible .pino-investigacao { background: var(--destaque); color: var(--fundo); transform: scale(1.1); }
+
+        .ponto-vermelho {
+            width: 9px; height: 9px; background: var(--alerta); border-radius: 50%; display: inline-block;
+            animation: pulsar 1.5s infinite;
+        }
+        .pino-investigacao.visitado { border-color: var(--borda); color: var(--texto-suave); }
+        .pino-investigacao.visitado .ponto-vermelho { background: var(--destaque); animation: none; }
+
+        @keyframes pulsar {
+            0%   { box-shadow: 0 0 0 0 rgba(229, 62, 62, .8); }
+            70%  { box-shadow: 0 0 0 8px rgba(229, 62, 62, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(229, 62, 62, 0); }
+        }
+
+        /* Janela de pista */
+        .modal-fundo {
+            display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, .85);
+            justify-content: center; align-items: center; z-index: 2000; padding: 20px;
+        }
+        .modal-fundo.aberto { display: flex; }
+        .modal-conteudo {
+            background: var(--painel); border: 2px solid var(--destaque); border-radius: 8px;
+            max-width: 580px; width: 100%; max-height: 90vh; overflow-y: auto;
+            padding: 30px 25px; position: relative; box-shadow: 0 10px 30px rgba(0, 0, 0, .8);
+        }
+        .fechar-modal {
+            position: absolute; top: 12px; right: 16px; font-size: 1.6rem; line-height: 1;
+            color: var(--texto-suave); cursor: pointer; background: none; border: none; padding: 4px 8px;
+        }
+        .fechar-modal:hover { color: var(--alerta); }
+        .etiqueta-pista {
+            display: inline-block; background: rgba(229, 62, 62, .18); border: 1px solid var(--alerta); color: #feb2b2;
+            font-size: .78rem; font-weight: bold; letter-spacing: 1px; text-transform: uppercase;
+            padding: 4px 10px; border-radius: 4px; margin-bottom: 10px;
+        }
+        .modal-titulo { color: var(--destaque); margin-bottom: 14px; font-size: 1.35rem; padding-right: 25px; }
+        .modal-descricao { line-height: 1.65; font-size: 1rem; margin-bottom: 14px; }
+        .modal-conexao {
+            background: var(--fundo); border-left: 3px solid var(--destaque); padding: 12px 14px;
+            border-radius: 4px; color: #cbd5e0; font-size: .9rem; line-height: 1.5;
+        }
+        .modal-conexao strong { color: var(--destaque); }
+
+        /* Pista do suspeito e cena do local da morte */
+        .bloco-suspeito, .bloco-morte { margin-top: 14px; padding: 12px 14px; border-radius: 4px; font-size: .92rem; line-height: 1.55; }
+        .bloco-suspeito { background: var(--fundo); border-left: 3px solid #d69e2e; }
+        .bloco-suspeito .rotulo { color: #ecc94b; font-weight: bold; display: block; margin-bottom: 6px; }
+        .bloco-suspeito blockquote { font-style: italic; color: var(--texto); margin: 6px 0 8px; }
+        .bloco-suspeito .ligacao { color: #cbd5e0; }
+        .bloco-morte { background: rgba(229, 62, 62, .12); border: 1px solid var(--alerta); }
+        .bloco-morte .rotulo { color: #feb2b2; font-weight: bold; display: block; margin-bottom: 6px; }
+
+        @media (max-width: 600px) {
+            header { padding: 14px 18px; }
+            .logo h1 { font-size: 1.2rem; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .ponto-vermelho { animation: none; }
+            .pino-investigacao { transition: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <h1>XIII: O ÚLTIMO ARCANO</h1>
+            <span>O CASO UNAERP • RIBEIRÃO PRETO</span>
+        </div>
+        <nav aria-label="Páginas do site">
+            <ul>
+                <li><a href="index.html" class="ativo" aria-current="page" data-nav-interno="true">O MAPA (JOGAR)</a></li>
+                <li><a href="culpado.html" data-nav-interno="true">QUEM MATOU?</a></li>
+                <li><a href="redes.html" data-nav-interno="true">NOSSAS REDES</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="instrucoes">
+            <h2>INVESTIGUE AS PISTAS NO CAMPUS</h2>
+            <p>Clique em cada ponto do mapa para coletar pistas sobre o baralho de tarô da Sala de Arquivo, o rastro da maldição e o que aconteceu com a Lorena.</p>
+            <p class="progresso" aria-live="polite">Pistas coletadas: <span id="contador">0/0</span></p>
+        </div>
+
+        <div class="investigacao">
+            <div id="mapa-unaerp" role="region" aria-label="Mapa interativo do campus da UNAERP"></div>
+
+            <section class="caderno" aria-labelledby="titulo-caderno">
+                <h3 id="titulo-caderno">Caderno de pistas</h3>
+                <ol id="lista-pistas"></ol>
+                <div class="acoes-caderno">
+                    <button class="reiniciar" id="btn-reiniciar" type="button">Reiniciar investigação</button>
+                    <a class="ir-acusacao" href="culpado.html" data-nav-interno="true">Ir para Quem Matou?</a>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Janela de pista -->
+    <div class="modal-fundo" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+        <div class="modal-conteudo">
+            <button class="fechar-modal" id="btn-fechar" type="button" aria-label="Fechar pista">&times;</button>
+            <span class="etiqueta-pista" id="modal-etiqueta"></span>
+            <h3 class="modal-titulo" id="modal-titulo"></h3>
+            <p class="modal-descricao" id="modal-descricao"></p>
+            <div class="modal-conexao">
+                <strong>Conexão com o caso:</strong> <span id="modal-conexao"></span>
+            </div>
+            <div class="bloco-suspeito" id="bloco-suspeito">
+                <span class="rotulo" id="suspeito-rotulo"></span>
+                <span id="suspeito-objeto"></span>
+                <blockquote id="suspeito-texto"></blockquote>
+                <p class="ligacao"><strong>Ligação:</strong> <span id="suspeito-ligacao"></span></p>
+            </div>
+            <div class="bloco-morte" id="bloco-morte" hidden>
+                <span class="rotulo">Pista especial • Local da morte da Lorena</span>
+                <p id="morte-texto"></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <script>
+        // ===== 1. DADOS DAS PISTAS =====
+        const locaisCampus = [
+            {
+                id: 'sala-arquivo', nome: 'Sala de Arquivo', horario: '19:12',
+                coords: [-21.2013, -47.7815],
+                etiqueta: 'Pista #01 • Origem da Maldição',
+                pista: 'Entre caixas empoeiradas e pastas antigas, restou um espaço vazio onde o baralho de tarô misterioso estava guardado — e uma marca de mão no pó indicando quem mexeu nele sem pensar.',
+                conexao: 'Liga o início do caos à abertura acidental do baralho na UNAERP.'
+            },
+            {
+                id: 'biblioteca', nome: 'Biblioteca Central', horario: '19:31',
+                coords: [-21.2011, -47.7813],
+                etiqueta: 'Pista #02 • O Arcano XIII',
+                pista: 'Um volume aberto sobre simbolismo e cartas de tarô está marcado exatamente na carta XIII (A Morte), com uma frase sarcástica rabiscada na margem.',
+                conexao: 'Conecta o título do caso ao humor ácido e ao tom sobrenatural da história.'
+            },
+            {
+                id: 'cantina', nome: 'Praça de Alimentação', horario: '19:48',
+                coords: [-21.2022, -47.7808],
+                etiqueta: 'Pista #03 • Antes do Surto',
+                pista: 'Em uma das mesas da Praça de Alimentação ficou um guardanapo amassado com um símbolo estranho e restos de lanche deixados às pressas.',
+                conexao: 'Mostra que o grupo estava reunido no campus momentos antes de a situação sair do controle.'
+            },
+            {
+                id: 'blocos', nome: 'Bloco H / Comunicação', horario: '20:07',
+                coords: [-21.2005, -47.7802],
+                etiqueta: 'Pista #04 • Vozes no Corredor',
+                pista: 'Câmeras e relatos apontam uma discussão tensa seguida de uma reação bizarra no corredor do Bloco H — alguém tentou disfarçar o nervosismo com piada.',
+                conexao: 'Coloca em dúvida os álibis de quem diz que não ouviu ou viu nada.'
+            },
+            {
+                id: 'teatro', nome: 'Teatro Bassano Vaccarini', horario: '20:26',
+                coords: [-21.2018, -47.7825],
+                etiqueta: 'Pista #05 • Rastro da Lorena',
+                pista: 'Nos bastidores e perto da entrada do teatro, há um crachá caído e uma anotação rápida mencionando a Lorena antes de tudo virar uma cena de slasher absurda.',
+                conexao: 'Ajuda a reconstruir os últimos passos da Lorena antes da tragédia.'
+            },
+            {
+                id: 'estacionamento', nome: 'Estacionamento Portaria', horario: '20:49',
+                coords: [-21.2032, -47.7818],
+                etiqueta: 'Pista #06 • Fuga ou Desespero',
+                pista: 'Perto da saída da portaria, há marcas de frenagem apressada e o registro de alguém deixando o campus no meio da confusão.',
+                conexao: 'Ajuda a testar quem realmente saiu cedo e quem ficou para trás.'
+            }
+        ];
+
+        const listaPistasSuspeitos = [
+            {
+                chave: 'E1', suspeitoId: 'eduarda', nome: 'Eduarda', codigo: 'E1', tipo: 'Carta / Arquivo',
+                objeto: 'Um recorte de carta de tarô com uma anotação rabiscada no verso:',
+                texto: 'A leitura mudou de mão antes da meia-noite — quem disse que o baralho ficou quieto na estante?',
+                ligacao: 'Aponta para o momento em que o baralho foi mexido na Sala de Arquivo e levanta dúvida sobre quem estava por perto quando tudo começou.'
+            },
+            {
+                chave: 'E2', suspeitoId: 'eduarda', nome: 'Eduarda', codigo: 'E2', tipo: 'Objeto / Detalhe de Cena',
+                objeto: 'Um bilhete dobrado com metade de uma frase e um símbolo de arcano desenhado à caneta:',
+                texto: '...não era pra ninguém ler a próxima carta sozinho.',
+                ligacao: 'Mostra que alguém sabia que abrir o baralho traria consequências, mas ainda deixa aberto se ela tentou avisar ou esconder algo.'
+            },
+            {
+                chave: 'G1', suspeitoId: 'gabriele', nome: 'Gabriele', codigo: 'G1', tipo: 'Registro / Anotação',
+                objeto: 'Uma folha solta com anotações rápidas sobre a maldição e uma observação irônica no canto:',
+                texto: 'Se é pra virar filme de terror barato, pelo menos que alguém anote as regras.',
+                ligacao: 'Reflete o tom ácido/irônico diante do caos e sugere que ela prestou atenção em detalhes que os outros ignoraram.'
+            },
+            {
+                chave: 'G2', suspeitoId: 'gabriele', nome: 'Gabriele', codigo: 'G2', tipo: 'Indício no Ambiente',
+                objeto: 'Um marcador de página preso em um livro antigo da faculdade com um número romano (XIII) e a frase:',
+                texto: 'O treze nunca fica parado no mesmo lugar.',
+                ligacao: 'Conecta o simbolismo do 13º Arcano à movimentação estranha pelos espaços da UNAERP.'
+            },
+            {
+                chave: 'M1', suspeitoId: 'matheus', nome: 'Matheus', codigo: 'M1', tipo: 'Rastro / Mensagem',
+                objeto: 'Um rascunho de mensagem apagado pela metade:',
+                texto: 'Se o local mudar de novo, ninguém vai achar o mesmo rastro duas vezes...',
+                ligacao: 'Dialoga direto com a imprevisibilidade da maldição e cria suspeita de que ele percebeu padrões antes dos outros.'
+            },
+            {
+                chave: 'M2', suspeitoId: 'matheus', nome: 'Matheus', codigo: 'M2', tipo: 'Pista Visual / Item',
+                objeto: 'Uma carta virada para baixo esquecida perto de uma passagem/corredor com a anotação:',
+                texto: 'Todo mundo olha pro suspeito óbvio, ninguém olha pra onde o jogo virou.',
+                ligacao: 'Desvia o foco das conclusões apressadas e reforça o clima de mistério com humor sarcástico.'
+            }
+        ];
+
+        function embaralhar(array) {
+            const copia = [...array];
+            for (let i = copia.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [copia[i], copia[j]] = [copia[j], copia[i]];
+            }
+            return copia;
+        }
+
+        function sortearDistribuicaoPistas() {
+            const embaralhadas = embaralhar(listaPistasSuspeitos);
+            const mapaDist = {};
+            locaisCampus.forEach((local, idx) => {
+                mapaDist[local.id] = embaralhadas[idx].chave;
+            });
+            return mapaDist;
+        }
+
+        function aplicarDistribuicaoPistas(mapaDist) {
+            const porChave = Object.fromEntries(listaPistasSuspeitos.map(p => [p.chave, p]));
+            const chavesValidas = Object.keys(porChave);
+            const usadas = new Set();
+
+            locaisCampus.forEach((local, idx) => {
+                let chave = mapaDist && mapaDist[local.id];
+                if (!chave || !porChave[chave] || usadas.has(chave)) {
+                    chave = chavesValidas.find(c => !usadas.has(c)) || listaPistasSuspeitos[idx].chave;
+                }
+                usadas.add(chave);
+                local.suspeito = porChave[chave];
+            });
+        }
+
+        // ===== 2. CONTROLE DE NAVEGAÇÃO INTERNA VS RELOAD (F5) =====
+        const CHAVE_NAV = 'xiii-nav-interna';
+        const CHAVE_PISTAS = 'xiii-pistas-coletadas';
+        const CHAVE_MORTE = 'xiii-local-morte';
+        const CHAVE_DIST = 'xiii-distribuicao-pistas';
+        const CENA_MORTE = 'Você encontrou o ponto onde a Lorena esteve por último. Há uma carta do 13º Arcano caída no chão, um clima pesado fora do normal e um detalhe que não faz sentido com o resto do lugar...';
+
+        function sortearLocalMorte() {
+            return locaisCampus[Math.floor(Math.random() * locaisCampus.length)].id;
+        }
+
+        let veioDeNavegacaoInterna = false;
+        try {
+            veioDeNavegacaoInterna = sessionStorage.getItem(CHAVE_NAV) === '1';
+            sessionStorage.removeItem(CHAVE_NAV);
+        } catch (e) {}
+
+        let coletadas = [];
+        let localMorte = sortearLocalMorte();
+        let distribuicaoPistas = sortearDistribuicaoPistas();
+
+        if (veioDeNavegacaoInterna) {
+            try {
+                coletadas = JSON.parse(sessionStorage.getItem(CHAVE_PISTAS)) || [];
+                const salvoMorte = sessionStorage.getItem(CHAVE_MORTE);
+                if (locaisCampus.some(l => l.id === salvoMorte)) localMorte = salvoMorte;
+                const salvoDist = JSON.parse(sessionStorage.getItem(CHAVE_DIST));
+                if (salvoDist && typeof salvoDist === 'object') distribuicaoPistas = salvoDist;
+            } catch (e) {
+                coletadas = [];
+            }
+        } else {
+            try {
+                sessionStorage.removeItem(CHAVE_PISTAS);
+                sessionStorage.removeItem(CHAVE_MORTE);
+                sessionStorage.removeItem(CHAVE_DIST);
+            } catch (e) {}
+        }
+
+        aplicarDistribuicaoPistas(distribuicaoPistas);
+
+        function salvarEstadoSessao() {
+            try {
+                sessionStorage.setItem(CHAVE_PISTAS, JSON.stringify(coletadas));
+                sessionStorage.setItem(CHAVE_MORTE, localMorte);
+                sessionStorage.setItem(CHAVE_DIST, JSON.stringify(distribuicaoPistas));
+            } catch (e) {}
+        }
+
+        document.querySelectorAll('a[data-nav-interno="true"]').forEach(link => {
+            link.addEventListener('click', () => {
+                salvarEstadoSessao();
+                try { sessionStorage.setItem(CHAVE_NAV, '1'); } catch (e) {}
+            });
+        });
+
+        // ===== 3. MAPA =====
+        const centroUnaerp = [-21.2015, -47.7810];
+        const mapa = L.map('mapa-unaerp', {
+            center: centroUnaerp,
+            zoom: 17,
+            minZoom: 16,
+            maxZoom: 19,
+            maxBounds: L.latLngBounds([-21.2120, -47.7930], [-21.1910, -47.7690]),
+            maxBoundsViscosity: 0.8
+        });
+
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Imagens de Satélite © Esri • Campus UNAERP',
+            maxZoom: 19
+        }).addTo(mapa);
+
+        const pinos = {};
+
+        locaisCampus.forEach(local => {
+            const icone = L.divIcon({
+                className: 'custom-div-icon',
+                html: '<div class="pino-investigacao"><span class="ponto-vermelho"></span><span class="nome"></span></div>',
+                iconSize: [170, 32],
+                iconAnchor: [85, 16]
+            });
+
+            const marcador = L.marker(local.coords, { icon: icone, title: local.nome, keyboard: true }).addTo(mapa);
+            const el = marcador.getElement();
+            el.querySelector('.nome').textContent = local.nome;
+            el.setAttribute('role', 'button');
+            el.setAttribute('aria-label', 'Investigar ' + local.nome);
+            pinos[local.id] = el.querySelector('.pino-investigacao');
+
+            marcador.on('click', () => abrirModal(local));
+        });
+
+        // ===== 4. CADERNO E CONTADOR =====
+        const lista = document.getElementById('lista-pistas');
+        const contador = document.getElementById('contador');
+
+        function atualizarInterface() {
+            contador.textContent = coletadas.length + '/' + locaisCampus.length;
+            lista.replaceChildren();
+
+            locaisCampus.forEach(l => pinos[l.id].classList.toggle('visitado', coletadas.includes(l.id)));
+
+            const achadas = locaisCampus
+                .filter(l => coletadas.includes(l.id))
+                .sort((a, b) => a.horario.localeCompare(b.horario));
+
+            if (!achadas.length) {
+                const li = document.createElement('li');
+                li.className = 'vazio';
+                li.textContent = 'Nenhuma pista ainda. Clique em um ponto do mapa para começar.';
+                lista.appendChild(li);
+                return;
+            }
+
+            achadas.forEach(l => {
+                const li = document.createElement('li');
+                const hora = document.createElement('span');
+                hora.className = 'hora';
+                hora.textContent = l.horario;
+                const btn = document.createElement('button');
+                btn.className = 'item';
+                btn.type = 'button';
+                btn.textContent = l.nome + ' • ' + l.suspeito.nome + ' (' + l.suspeito.codigo + '): ' + l.suspeito.ligacao + (l.id === localMorte ? ' • Local da morte da Lorena' : '');
+                btn.addEventListener('click', () => abrirModal(l));
+                li.append(hora, btn);
+                lista.appendChild(li);
+            });
+        }
+
+        document.getElementById('btn-reiniciar').addEventListener('click', () => {
+            if (confirm('Apagar todas as pistas coletadas e recomeçar?')) {
+                coletadas = [];
+                localMorte = sortearLocalMorte();
+                distribuicaoPistas = sortearDistribuicaoPistas();
+                aplicarDistribuicaoPistas(distribuicaoPistas);
+                try {
+                    sessionStorage.removeItem(CHAVE_PISTAS);
+                    sessionStorage.removeItem(CHAVE_MORTE);
+                    sessionStorage.removeItem(CHAVE_DIST);
+                } catch (e) {}
+                atualizarInterface();
+            }
+        });
+
+        // ===== 5. JANELA DE PISTA =====
+        const modal = document.getElementById('modal');
+        const btnFechar = document.getElementById('btn-fechar');
+        let focoAnterior = null;
+
+        function abrirModal(local) {
+            focoAnterior = document.activeElement;
+
+            document.getElementById('modal-etiqueta').textContent = local.etiqueta + ' • ' + local.horario;
+            document.getElementById('modal-titulo').textContent = local.nome + ' (' + local.horario + ')';
+            document.getElementById('modal-descricao').textContent = local.pista;
+            document.getElementById('modal-conexao').textContent = local.conexao;
+
+            const s = local.suspeito;
+            document.getElementById('suspeito-rotulo').textContent = 'Pista ' + s.codigo + ' • ' + s.nome + ' (' + s.tipo + ')';
+            document.getElementById('suspeito-objeto').textContent = s.objeto;
+            document.getElementById('suspeito-texto').textContent = '“' + s.texto + '”';
+            document.getElementById('suspeito-ligacao').textContent = s.ligacao;
+
+            const blocoMorte = document.getElementById('bloco-morte');
+            blocoMorte.hidden = local.id !== localMorte;
+            document.getElementById('morte-texto').textContent = local.id === localMorte ? CENA_MORTE : '';
+
+            if (!coletadas.includes(local.id)) {
+                coletadas.push(local.id);
+                atualizarInterface();
+            }
+
+            modal.classList.add('aberto');
+            btnFechar.focus();
+        }
+
+        function fecharModal() {
+            modal.classList.remove('aberto');
+            if (focoAnterior && document.contains(focoAnterior)) focoAnterior.focus();
+        }
+
+        btnFechar.addEventListener('click', fecharModal);
+        modal.addEventListener('click', e => { if (e.target === modal) fecharModal(); });
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && modal.classList.contains('aberto')) fecharModal();
+        });
+
+        atualizarInterface();
+    </script>
+</body>
+</html>
